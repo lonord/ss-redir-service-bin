@@ -1,0 +1,28 @@
+{
+  "name": "@lonord/ss-redir-service-bin",
+  "version": "1.0.0",
+  "description": "Binaries provider for ss-redir-service",
+  "main": "lib/",
+  "types": "index.d.ts",
+  "scripts": {
+    "postinstall": "node postinstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lonord/ss-redir-service-bin.git"
+  },
+  "keywords": [
+    "shadowsocks"
+  ],
+  "author": "Loy B. <lonord@qq.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lonord/ss-redir-service-bin/issues"
+  },
+  "homepage": "https://github.com/lonord/ss-redir-service-bin#readme",
+  "dependencies": {
+    "hash-files": "^1.1.1",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.6.2"
+  }
+}
