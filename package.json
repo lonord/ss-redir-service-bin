@@ -1,6 +1,6 @@
 {
   "name": "@lonord/ss-redir-service-bin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Binaries provider for ss-redir-service",
   "main": "lib/",
   "types": "index.d.ts",
