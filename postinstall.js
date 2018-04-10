@@ -4,30 +4,27 @@ const mkdirp = require('mkdirp')
 const { platform, tmpdir, arch } = require('os')
 const { join } = require('path')
 const rimraf = require('rimraf')
-const hashFiles = require('hash-files')
 const binDir = require('./index')
 
 const tmp = join(tmpdir(), 'ss-redir-service-tmp')
 const osType = platform()
 const cpuArch = arch()
 const assertDir = join(__dirname, './assets')
-const hashFile = join(assertDir, 'binary.hash')
-const ssPackageFile = findSSPackage()
 
 if (osType === 'linux') {
-	if (checkBinaryHashFile()) {
-		console.log('> shadowsocks-libev is already installed')
-		return
-	}
-	console.log('> Installing shadowsocks-libev')
-	compileShadowskcks()
-	createBinaryHashFile()
-	console.log('> Installed shadowsocks-libev successfully')
+	console.log('> Installing ...')
+	compileShadowsocks()
+	compileHevDnsForwarder()
+	console.log('> Install succeed')
 } else {
 	console.log(`> Current os ${osType} is not supported, skip install`)
 }
 
-function compileShadowskcks() {
+/*********************************************** shadowsocks *********************************************/
+
+function compileShadowsocks() {
+	console.log('> Compiling shadowsocks-libev ...')
+	const ssPackageFile = findSSPackage()
 	rimraf.sync(tmp)
 	mkdirp.sync(tmp)
 	execSync(`tar zxf ${ssPackageFile} -C ${tmp}`)
@@ -42,54 +39,6 @@ function compileShadowskcks() {
 	})
 	copySSBinary(exractDir)
 	rimraf.sync(tmp)
-}
-
-function createBinaryHashFile() {
-	const hashFileContent = {
-		ssNAT: calculateFileHash(join(binDir, 'ss-nat')),
-		ssRedir: calculateFileHash(join(binDir, 'ss-redir')),
-		ssTunnel: calculateFileHash(join(binDir, 'ss-tunnel')),
-		tar: calculateFileHash(ssPackageFile)
-	}
-	writeFileSync(hashFile, JSON.stringify(hashFileContent), 'utf8')
-}
-
-function checkBinaryHashFile() {
-	if (!existsSync(hashFile)) {
-		return false
-	}
-	let hashFileContent = null
-	try {
-		hashFileContent = JSON.parse(readFileSync(hashFile, 'utf8'))
-	} catch (err) {
-		return false
-	}
-	if (!hashFileContent.ssNAT || !hashFileContent.ssRedir || !hashFileContent.ssTunnel || !hashFileContent.tar) {
-		return false
-	}
-	if (hashFileContent.tar !== calculateFileHash(ssPackageFile)) {
-		return false
-	}
-	if (hashFileContent.ssNAT !== calculateFileHash(join(binDir, 'ss-nat'))) {
-		return false
-	}
-	if (hashFileContent.ssRedir !== calculateFileHash(join(binDir, 'ss-redir'))) {
-		return false
-	}
-	if (hashFileContent.ssTunnel !== calculateFileHash(join(binDir, 'ss-tunnel'))) {
-		return false
-	}
-	return true
-}
-
-function calculateFileHash(filePath) {
-	if (!existsSync(filePath)) {
-		return '-'
-	}
-	return hashFiles.sync({
-		files: [filePath],
-		algorithm: 'sha256'
-	})
 }
 
 function findSSPackage() {
@@ -121,4 +70,21 @@ function copySSBinary(exractDir) {
 	copyFileSync(ssNAT, join(targetDir, 'ss-nat'))
 	copyFileSync(ssRedir, join(targetDir, 'ss-redir'))
 	copyFileSync(ssTunnel, join(targetDir, 'ss-tunnel'))
+}
+
+/*********************************************** hev-dns-forwarder *********************************************/
+
+function compileHevDnsForwarder() {
+	console.log('> Compiling hev-dns-forwarder ...')
+	const hevDnsForwarderPackageFile = join(assertDir, 'hev-dns-forwarder.tar.gz')
+	rimraf.sync(tmp)
+	mkdirp.sync(tmp)
+	execSync(`tar zxf ${hevDnsForwarderPackageFile} -C ${tmp}`)
+	const exractDir = join(tmp, 'hev-dns-forwarder')
+	execSync('make', {
+		cwd: exractDir,
+		stdio: 'inherit'
+	})
+	copyFileSync(join(exractDir, 'src', 'hev-dns-forwarder'), join(binDir, 'hev-dns-forwarder'))
+	rimraf.sync(tmp)
 }
